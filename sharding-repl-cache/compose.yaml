@@ -1,0 +1,269 @@
+name: sharding-repl-cache
+
+services:
+  # Config server
+  mongo-config:
+    container_name: mongo-config
+    image: dh-mirror.gitverse.ru/mongo:latest
+    restart: unless-stopped
+    command: [
+      "--configsvr",
+      "--replSet",
+      "config_server",
+      "--bind_ip_all",
+      "--port",
+      "27017"
+    ]
+    volumes:
+      - mongo-config:/data/db
+    networks:
+      - app-network
+
+  # Shard 1
+  mongo-shard1:
+    container_name: mongo-shard1
+    image: dh-mirror.gitverse.ru/mongo:latest
+    restart: unless-stopped
+    command: [
+      "--shardsvr",
+      "--replSet",
+      "shard1",
+      "--bind_ip_all",
+      "--port",
+      "27017"
+    ]
+    volumes:
+      - mongo-shard1:/data/db
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      start_period: 10s
+
+  mongo-shard1-repl-1:
+    container_name: mongo-shard1-repl-1
+    image: dh-mirror.gitverse.ru/mongo:latest
+    restart: unless-stopped
+    command: [
+      "--shardsvr",
+      "--replSet",
+      "shard1",
+      "--bind_ip_all",
+      "--port",
+      "27017"
+    ]
+    volumes:
+      - mongo-shard1-repl-1:/data/db
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      start_period: 10s
+
+  mongo-shard1-repl-2:
+    container_name: mongo-shard1-repl-2
+    image: dh-mirror.gitverse.ru/mongo:latest
+    restart: unless-stopped
+    command: [
+      "--shardsvr",
+      "--replSet",
+      "shard1",
+      "--bind_ip_all",
+      "--port",
+      "27017"
+    ]
+    volumes:
+      - mongo-shard1-repl-2:/data/db
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      start_period: 10s
+
+  mongo-shard1-repl-3:
+    container_name: mongo-shard1-repl-3
+    image: dh-mirror.gitverse.ru/mongo:latest
+    restart: unless-stopped
+    command: [
+      "--shardsvr",
+      "--replSet",
+      "shard1",
+      "--bind_ip_all",
+      "--port",
+      "27017"
+    ]
+    volumes:
+      - mongo-shard1-repl-3:/data/db
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      start_period: 10s
+
+  # Shard 2
+  mongo-shard2:
+    container_name: mongo-shard2
+    image: dh-mirror.gitverse.ru/mongo:latest
+    restart: unless-stopped
+    command: [
+      "--shardsvr",
+      "--replSet",
+      "shard2",
+      "--bind_ip_all",
+      "--port",
+      "27017"
+    ]
+    volumes:
+      - mongo-shard2:/data/db
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      start_period: 10s
+
+  mongo-shard2-repl-1:
+    container_name: mongo-shard2-repl-1
+    image: dh-mirror.gitverse.ru/mongo:latest
+    restart: unless-stopped
+    command: [
+      "--shardsvr",
+      "--replSet",
+      "shard2",
+      "--bind_ip_all",
+      "--port",
+      "27017"
+    ]
+    volumes:
+      - mongo-shard2-repl-1:/data/db
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      start_period: 10s
+
+  mongo-shard2-repl-2:
+    container_name: mongo-shard2-repl-2
+    image: dh-mirror.gitverse.ru/mongo:latest
+    restart: unless-stopped
+    command: [
+      "--shardsvr",
+      "--replSet",
+      "shard2",
+      "--bind_ip_all",
+      "--port",
+      "27017"
+    ]
+    volumes:
+      - mongo-shard2-repl-2:/data/db
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      start_period: 10s
+
+  mongo-shard2-repl-3:
+    container_name: mongo-shard2-repl-3
+    image: dh-mirror.gitverse.ru/mongo:latest
+    restart: unless-stopped
+    command: [
+      "--shardsvr",
+      "--replSet",
+      "shard2",
+      "--bind_ip_all",
+      "--port",
+      "27017"
+    ]
+    volumes:
+      - mongo-shard2-repl-3:/data/db
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      start_period: 10s
+
+  # Mongo router
+  mongo-router:
+    container_name: mongo-router
+    image: dh-mirror.gitverse.ru/mongo:latest
+    restart: unless-stopped
+    command: [
+      "mongos",
+      "--configdb",
+      "config_server/mongo-config:27017",
+      "--bind_ip_all",
+      "--port",
+      "27017"
+    ]
+    ports:
+      - "27017:27017"
+    depends_on:
+      - mongo-config
+      - mongo-shard1
+      - mongo-shard1-repl-1
+      - mongo-shard1-repl-2
+      - mongo-shard1-repl-3
+      - mongo-shard2
+      - mongo-shard2-repl-1
+      - mongo-shard2-repl-2
+      - mongo-shard2-repl-3
+    networks:
+      - app-network
+    volumes:
+      - mongo-router:/data/db
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      start_period: 10s
+
+  # Cache
+  cache-service:
+    container_name: cache-service
+    image: dh-mirror.gitverse.ru/redis:latest
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - cache-service:/data
+    networks:
+      - app-network
+
+  # Application
+  app:
+    container_name: app
+    image: kazhem/pymongo_api:1.0.0
+    restart: unless-stopped
+    depends_on:
+      - mongo-router
+    ports:
+      - 8080:8080
+    environment:
+      MONGODB_URL: "mongodb://mongo-router"
+      MONGODB_DATABASE_NAME: "somedb"
+      REDIS_URL: "redis://cache-service:6379"
+    networks:
+      - app-network
+
+volumes:
+  mongo-config: {}
+  mongo-router: {}
+  mongo-shard1: {}
+  mongo-shard1-repl-1: {}
+  mongo-shard1-repl-2: {}
+  mongo-shard1-repl-3: {}
+  mongo-shard2: {}
+  mongo-shard2-repl-1: {}
+  mongo-shard2-repl-2: {}
+  mongo-shard2-repl-3: {}
+  cache-service: {}
+
+networks:
+  app-network:
+    driver: bridge
