@@ -1,0 +1,117 @@
+name: mongo-sharding
+
+services:
+  # Config server
+  mongo-sharding-config:
+    container_name: mongo-sharding-config
+    image: dh-mirror.gitverse.ru/mongo:latest
+    restart: unless-stopped
+    command: [
+      "--configsvr",
+      "--replSet",
+      "config_server",
+      "--bind_ip_all",
+      "--port",
+      "27017"
+    ]
+    volumes:
+      - mongo-sharding-config:/data/db
+    networks:
+      - app-network
+
+  # Shard 1
+  mongo-sharding-shard1:
+    container_name: mongo-sharding-shard1
+    image: dh-mirror.gitverse.ru/mongo:latest
+    restart: unless-stopped
+    command: [
+      "--shardsvr",
+      "--replSet",
+      "shard1",
+      "--bind_ip_all",
+      "--port",
+      "27017"
+    ]
+    volumes:
+      - mongo-sharding-shard1:/data/db
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      start_period: 10s
+
+  # Shard 2
+  mongo-sharding-shard2:
+    container_name: mongo-sharding-shard2
+    image: dh-mirror.gitverse.ru/mongo:latest
+    restart: unless-stopped
+    command: [
+      "--shardsvr",
+      "--replSet",
+      "shard2",
+      "--bind_ip_all",
+      "--port",
+      "27017"
+    ]
+    volumes:
+      - mongo-sharding-shard2:/data/db
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      start_period: 10s
+
+  # Mongo router
+  mongo-sharding-router:
+    container_name: mongo-sharding-router
+    image: dh-mirror.gitverse.ru/mongo:latest
+    restart: unless-stopped
+    command: [
+      "mongos",
+      "--configdb",
+      "config_server/mongo-sharding-config:27017",
+      "--bind_ip_all",
+      "--port",
+      "27017"
+    ]
+    ports:
+      - "27017:27017"
+    depends_on:
+      - mongo-sharding-config
+      - mongo-sharding-shard1
+      - mongo-sharding-shard2
+    networks:
+      - app-network
+    volumes:
+      - mongo-sharding-router:/data/db
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      start_period: 10s
+
+  # Application
+  mongo-sharding-app:
+    container_name: mongo-sharding-app
+    image: kazhem/pymongo_api:1.0.0
+    restart: unless-stopped
+    depends_on:
+      - mongo-sharding-router
+    ports:
+      - 8080:8080
+    environment:
+      MONGODB_URL: "mongodb://mongo-sharding-router"
+      MONGODB_DATABASE_NAME: "somedb"
+    networks:
+      - app-network
+
+volumes:
+  mongo-sharding-config: {}
+  mongo-sharding-router: {}
+  mongo-sharding-shard1: {}
+  mongo-sharding-shard2: {}
+
+networks:
+  app-network:
+    driver: bridge
