@@ -1,0 +1,255 @@
+name: mongo-sharding-repl
+
+services:
+  # Config server
+  mongo-sharding-repl-config:
+    container_name: mongo-sharding-repl-config
+    image: dh-mirror.gitverse.ru/mongo:latest
+    restart: unless-stopped
+    command: [
+      "--configsvr",
+      "--replSet",
+      "config_server",
+      "--bind_ip_all",
+      "--port",
+      "27017"
+    ]
+    volumes:
+      - mongo-sharding-repl-config:/data/db
+    networks:
+      - app-network
+
+  # Shard 1
+  mongo-sharding-repl-shard1:
+    container_name: mongo-sharding-repl-shard1
+    image: dh-mirror.gitverse.ru/mongo:latest
+    restart: unless-stopped
+    command: [
+      "--shardsvr",
+      "--replSet",
+      "shard1",
+      "--bind_ip_all",
+      "--port",
+      "27017"
+    ]
+    volumes:
+      - mongo-sharding-repl-shard1:/data/db
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      start_period: 10s
+
+  mongo-sharding-repl-shard1-repl-1:
+    container_name: mongo-sharding-repl-shard1-repl-1
+    image: dh-mirror.gitverse.ru/mongo:latest
+    restart: unless-stopped
+    command: [
+      "--shardsvr",
+      "--replSet",
+      "shard1",
+      "--bind_ip_all",
+      "--port",
+      "27017"
+    ]
+    volumes:
+      - mongo-sharding-repl-shard1-repl-1:/data/db
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      start_period: 10s
+
+  mongo-sharding-repl-shard1-repl-2:
+    container_name: mongo-sharding-repl-shard1-repl-2
+    image: dh-mirror.gitverse.ru/mongo:latest
+    restart: unless-stopped
+    command: [
+      "--shardsvr",
+      "--replSet",
+      "shard1",
+      "--bind_ip_all",
+      "--port",
+      "27017"
+    ]
+    volumes:
+      - mongo-sharding-repl-shard1-repl-2:/data/db
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      start_period: 10s
+
+  mongo-sharding-repl-shard1-repl-3:
+    container_name: mongo-sharding-repl-shard1-repl-3
+    image: dh-mirror.gitverse.ru/mongo:latest
+    restart: unless-stopped
+    command: [
+      "--shardsvr",
+      "--replSet",
+      "shard1",
+      "--bind_ip_all",
+      "--port",
+      "27017"
+    ]
+    volumes:
+      - mongo-sharding-repl-shard1-repl-3:/data/db
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      start_period: 10s
+
+  # Shard 2
+  mongo-sharding-repl-shard2:
+    container_name: mongo-sharding-repl-shard2
+    image: dh-mirror.gitverse.ru/mongo:latest
+    restart: unless-stopped
+    command: [
+      "--shardsvr",
+      "--replSet",
+      "shard2",
+      "--bind_ip_all",
+      "--port",
+      "27017"
+    ]
+    volumes:
+      - mongo-sharding-repl-shard2:/data/db
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      start_period: 10s
+
+  mongo-sharding-repl-shard2-repl-1:
+    container_name: mongo-sharding-repl-shard2-repl-1
+    image: dh-mirror.gitverse.ru/mongo:latest
+    restart: unless-stopped
+    command: [
+      "--shardsvr",
+      "--replSet",
+      "shard2",
+      "--bind_ip_all",
+      "--port",
+      "27017"
+    ]
+    volumes:
+      - mongo-sharding-repl-shard2-repl-1:/data/db
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      start_period: 10s
+
+  mongo-sharding-repl-shard2-repl-2:
+    container_name: mongo-sharding-repl-shard2-repl-2
+    image: dh-mirror.gitverse.ru/mongo:latest
+    restart: unless-stopped
+    command: [
+      "--shardsvr",
+      "--replSet",
+      "shard2",
+      "--bind_ip_all",
+      "--port",
+      "27017"
+    ]
+    volumes:
+      - mongo-sharding-repl-shard2-repl-2:/data/db
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      start_period: 10s
+
+  mongo-sharding-repl-shard2-repl-3:
+    container_name: mongo-sharding-repl-shard2-repl-3
+    image: dh-mirror.gitverse.ru/mongo:latest
+    restart: unless-stopped
+    command: [
+      "--shardsvr",
+      "--replSet",
+      "shard2",
+      "--bind_ip_all",
+      "--port",
+      "27017"
+    ]
+    volumes:
+      - mongo-sharding-repl-shard2-repl-3:/data/db
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      start_period: 10s
+
+  # Mongo router
+  mongo-sharding-repl-router:
+    container_name: mongo-sharding-repl-router
+    image: dh-mirror.gitverse.ru/mongo:latest
+    restart: unless-stopped
+    command: [
+      "mongos",
+      "--configdb",
+      "config_server/mongo-sharding-repl-config:27017",
+      "--bind_ip_all",
+      "--port",
+      "27017"
+    ]
+    ports:
+      - "27017:27017"
+    depends_on:
+      - mongo-sharding-repl-config
+      - mongo-sharding-repl-shard1
+      - mongo-sharding-repl-shard1-repl-1
+      - mongo-sharding-repl-shard1-repl-2
+      - mongo-sharding-repl-shard1-repl-3
+      - mongo-sharding-repl-shard2
+      - mongo-sharding-repl-shard2-repl-1
+      - mongo-sharding-repl-shard2-repl-2
+      - mongo-sharding-repl-shard2-repl-3
+    networks:
+      - app-network
+    volumes:
+      - mongo-sharding-repl-router:/data/db
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      start_period: 10s
+
+  # Application
+  mongo-sharding-repl-app:
+    container_name: mongo-sharding-repl-app
+    image: kazhem/pymongo_api:1.0.0
+    restart: unless-stopped
+    depends_on:
+      - mongo-sharding-repl-router
+    ports:
+      - 8080:8080
+    environment:
+      MONGODB_URL: "mongodb://mongo-sharding-repl-router"
+      MONGODB_DATABASE_NAME: "somedb"
+    networks:
+      - app-network
+
+volumes:
+  mongo-sharding-repl-config: {}
+  mongo-sharding-repl-router: {}
+  mongo-sharding-repl-shard1: {}
+  mongo-sharding-repl-shard1-repl-1: {}
+  mongo-sharding-repl-shard1-repl-2: {}
+  mongo-sharding-repl-shard1-repl-3: {}
+  mongo-sharding-repl-shard2: {}
+  mongo-sharding-repl-shard2-repl-1: {}
+  mongo-sharding-repl-shard2-repl-2: {}
+  mongo-sharding-repl-shard2-repl-3: {}
+
+networks:
+  app-network:
+    driver: bridge
